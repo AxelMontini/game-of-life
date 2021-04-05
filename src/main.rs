@@ -8,6 +8,9 @@ use cgmath::Matrix;
 use glium::{Surface, texture::RawImage2d};
 use rayon::prelude::*;
 
+const WIDTH: usize = 512;
+const INTERVAL_SEC: f32 = 0.1;
+
 fn main() -> Result<(), Box<dyn Error>> {
     run()
 }
@@ -27,7 +30,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let event_loop = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
         .with_resizable(false)
-        .with_inner_size(glutin::dpi::PhysicalSize::new(256, 256))
+        .with_inner_size(glutin::dpi::PhysicalSize::new(WIDTH as u16, WIDTH as u16))
         .with_title("Game of Life in Rust");
     let cb = glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &event_loop)?;
@@ -41,23 +44,23 @@ fn run() -> Result<(), Box<dyn Error>> {
             },
             Vertex {
                 color: [1.0, 1.0, 1.0],
-                position: [0.0, 255.0],
+                position: [0.0, WIDTH as f32],
             },
             Vertex {
                 color: [1.0, 1.0, 1.0],
-                position: [256.0, 0.0],
+                position: [WIDTH as f32, 0.0],
             },
             Vertex {
                 color: [1.0, 1.0, 1.0],
-                position: [256.0, 0.0],
+                position: [WIDTH as f32, 0.0],
             },
             Vertex {
                 color: [1.0, 1.0, 1.0],
-                position: [0.0, 256.0],
+                position: [0.0, WIDTH as f32],
             },
             Vertex {
                 color: [1.0, 1.0, 1.0],
-                position: [256.0, 256.0],
+                position: [WIDTH as f32, WIDTH as f32],
             },
         ],
     )?;
@@ -81,19 +84,19 @@ fn run() -> Result<(), Box<dyn Error>> {
                 }
             ",
 
-            fragment: "
+            fragment: &format!("
                 #version 140
                 uniform sampler2D grid;
                 in vec2 vCoords;
                 out vec4 f_color;
-                void main() {
-                    f_color = texture(grid, vCoords / 256.0);
-                }
-            "
+                void main() {{
+                    f_color = texture(grid, vCoords / {});
+                }}
+            ", WIDTH as f32)
         },
     )?;
 
-    let mut board = Board::<256, 256>::new();
+    let mut board = Board::<WIDTH, WIDTH>::new();
 
     let mut last_step = Instant::now();
 
@@ -101,7 +104,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     event_loop.run(move |event, _, control_flow| {
         let elapsed_dur = last_step.elapsed();
 
-        if elapsed_dur.as_secs_f32() >= 0.25 {
+        if elapsed_dur.as_secs_f32() >= INTERVAL_SEC {
             println!("Rn");
             print_board(&board, &display, &vertex_buffer, &index_buffer, &program)
                 .expect("printing board");
@@ -140,16 +143,11 @@ fn print_board<const W: usize, const H: usize>(
         })
         .collect();
 
-    // assert_eq!(vertices.len(), 256*256);
-
-    // // update vertex buffer
-    // vertex_buffer.write(&vertices);
-
-    let image_raw = RawImage2d::from_raw_rgb(pixels, (256, 256));
+    let image_raw = RawImage2d::from_raw_rgb(pixels, (WIDTH as u32, WIDTH as u32));
     let texture = glium::texture::texture2d::Texture2d::new(display, image_raw)?;
 
     let ortho_matrix: [[f32; 4]; 4] =
-        cgmath::ortho::<f32>(0.0, 256.0, 0.0, 256.0, -1.0, 1.0).into();
+        cgmath::ortho::<f32>(0.0, WIDTH as f32, 0.0, WIDTH as f32, -1.0, 1.0).into();
 
     let uniforms = uniform! {
         matrix: ortho_matrix,
