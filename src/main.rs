@@ -5,10 +5,10 @@ use std::{
 };
 
 use cgmath::Matrix;
-use glium::{Surface, texture::RawImage2d};
+use glium::{texture::RawImage2d, Surface};
 use rayon::prelude::*;
 
-const WIDTH: usize = 512;
+const WIDTH: usize = 256;
 const INTERVAL_SEC: f32 = 0.1;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -30,7 +30,10 @@ fn run() -> Result<(), Box<dyn Error>> {
     let event_loop = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
         .with_resizable(false)
-        .with_inner_size(glutin::dpi::PhysicalSize::new(WIDTH as u16, WIDTH as u16))
+        .with_inner_size(glutin::dpi::PhysicalSize::new(
+            4 * WIDTH as u16,
+            4 * WIDTH as u16,
+        ))
         .with_title("Game of Life in Rust");
     let cb = glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &event_loop)?;
@@ -145,13 +148,16 @@ fn print_board<const W: usize, const H: usize>(
 
     let image_raw = RawImage2d::from_raw_rgb(pixels, (WIDTH as u32, WIDTH as u32));
     let texture = glium::texture::texture2d::Texture2d::new(display, image_raw)?;
+    let texture_sampler = texture
+        .sampled()
+        .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest);
 
     let ortho_matrix: [[f32; 4]; 4] =
         cgmath::ortho::<f32>(0.0, WIDTH as f32, 0.0, WIDTH as f32, -1.0, 1.0).into();
 
     let uniforms = uniform! {
         matrix: ortho_matrix,
-        grid: &texture,
+        grid: texture_sampler,
     };
 
     let mut target = display.draw();
