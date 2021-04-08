@@ -1,10 +1,10 @@
-use glium::{Display, IndexBuffer, Program, VertexBuffer, texture::RawImage2d};
-use glium::Surface;
-use std::error::Error;
-use std::time::Instant;
 use glium::program;
 use glium::texture::Texture2d;
+use glium::Surface;
+use glium::{texture::RawImage2d, Display, IndexBuffer, Program, VertexBuffer};
 use rand::prelude::*;
+use std::error::Error;
+use std::time::Instant;
 
 use crate::{INTERVAL_SEC, WIDTH};
 
@@ -236,9 +236,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let mut old_texture = Texture2d::new(&display, old_image)?;
 
     // texture used as intermediate result
-    let new_image = RawImage2d::from_raw_rgba(vec![0.0; WIDTH * WIDTH * 4], (WIDTH as u32, WIDTH as u32));
+    let new_image =
+        RawImage2d::from_raw_rgba(vec![0.0; WIDTH * WIDTH * 4], (WIDTH as u32, WIDTH as u32));
     let mut new_texture = Texture2d::new(&display, new_image)?;
-
 
     let mut last_step = Instant::now();
 
@@ -257,8 +257,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 old_texture: &old_texture,
             };
 
-            crate::gpu::step(data)
-                .expect("printing board");
+            crate::gpu::step(data).expect("printing board");
 
             // swap textures after computation.
             std::mem::swap(&mut old_texture, &mut new_texture);

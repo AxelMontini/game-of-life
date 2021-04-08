@@ -31,18 +31,22 @@ pub fn step(data: StepData<'_>) -> Result<(), Box<dyn Error>> {
 
     let compute_uniforms = uniform! {
         matrix: ortho_matrix,
-        grid: new_texture,
+        grid: old_texture,
         scale: WIDTH as f32,
     };
+
+    // render onto new_texture first
+    let mut framebuffer = glium::framebuffer::SimpleFrameBuffer::new(display, new_texture)?;
+
+    let new_texture = new_texture
+        .sampled()
+        .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest);
 
     let display_uniforms = uniform! {
         matrix: ortho_matrix,
         grid: new_texture,
         scale: WIDTH as f32,
     };
-
-    // render onto new_texture first
-    let mut framebuffer = glium::framebuffer::SimpleFrameBuffer::new(display, new_texture)?;
 
     framebuffer.draw(
         vertex_buffer,

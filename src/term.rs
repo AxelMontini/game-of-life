@@ -1,4 +1,3 @@
-
 fn run() -> Result<(), Box<dyn Error>> {
     let mut board = Board::<128, 64>::new();
 
